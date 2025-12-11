@@ -1,0 +1,35 @@
+name: Update PCR Data
+
+on:
+  schedule:
+    - cron: '15 4 * * *'  # 每天北京时间 12:15（UTC+8 = UTC 4:15）
+  workflow_dispatch:       # 允许你手动点击运行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Run PCR Generator
+      run: python pcr_fetch.py
+
+    - name: Commit updated PCR data
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add pcr_data.json
+        git commit -m "Auto update PCR data" || echo "No changes to commit"
+
+    - name: Push changes
+      uses: ad-m/github-push-action@v0.6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main
